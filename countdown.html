@@ -1,0 +1,66 @@
+<html>
+<head>
+<style>
+#countdown
+{
+  background-color: black;
+  position: fixed;
+  top: 0; left: 0;
+  right: 0; bottom: 0;
+  /*z-index: 99999;*/
+
+  text-align: center;
+  font-family: Arial, sans-serif;
+  font-size: 18px;
+  color: #666;
+
+  padding-top: 150px;
+}
+
+#timeleft
+{
+  color: white;
+  font-weight: bold;
+  font-size: 100px;
+  /*display: block;*/
+}
+</style>
+<script type="text/javascript">
+function startCountdown()
+{
+  chrome.tabs.getCurrent(function (tab) {
+    chrome.extension.sendRequest({ 'request': 'getCountdownInfo', 'tabId': tab.id }, function(countdownInfo) {
+      if (countdownInfo != null)
+      {
+        var message = document.getElementById('message');
+        message.innerHTML = 'You can use ' + countdownInfo.host + ' in:';
+      }
+    });
+  });
+
+  setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown()
+{
+  chrome.tabs.getCurrent(function (tab) {
+    chrome.extension.sendRequest({ 'request': 'getCountdownInfo', 'tabId': tab.id }, function(countdownInfo) {
+      if (countdownInfo != null)
+      {
+        var timeleft = document.getElementById('timeleft');
+        timeleft.innerHTML = formatTime(countdownInfo.secondsLeft);
+      }
+    });
+  });
+}
+
+function formatTime(seconds)
+{
+  return seconds.toString();
+}
+</script>
+</head>
+<body onload="startCountdown();">
+<div id="countdown"><div id="message"></div><div id="timeleft"></div></div>
+</body>
+</html>

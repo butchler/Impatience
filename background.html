@@ -1,0 +1,106 @@
+<html>
+<script language="javascript">
+
+// Initialize localStorage variables if they haven't been initialized yet
+/*if (localStorage.blacklist == undefined)
+   localStorage.blacklist = JSON.stringify([]);
+if (localStorage.secondsToWait == undefined)
+   localStorage.secondsToWait = '300';*/
+localStorage.blacklist = JSON.stringify(['facebook.com']);
+localStorage.secondsToWait = '5';
+
+var countdowns = {};
+
+chrome.tabs.onCreated.addListener(function (tab) {
+  if (isBlacklisted(tab.url, tab.id))
+  {
+    startCountdown(tab.url, tab.id);
+  }
+});
+
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+  if (changeInfo.url != undefined && isBlacklisted(changeInfo.url, tabId))
+  {
+    startCountdown(changeInfo.url, tabId);
+  }
+});
+
+chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+  if (countdowns[tabId] != undefined)
+  {
+    clearInterval(countdowns[tabId].interval);
+  }
+
+  delete countdowns[tabId];
+});
+
+function isBlacklisted(url, tabId)
+{
+  var host = getHostname(url);
+  var blacklist = JSON.parse(localStorage.blacklist);
+
+  if (blacklist.indexOf(host) >= 0)
+  {
+    // If a page has completed its countdown, say that it isn't blacklisted
+    if (countdowns[tabId] != undefined && countdowns[tabId].host == host && countdowns[tabId].completed == true)
+    {
+      return false;
+    }
+
+    return true;
+  }
+
+  return false;
+}
+
+// Start countdown and redirect to countdown page
+function startCountdown(url, tabId)
+{
+  // Start countdown
+  var interval = setInterval(function () { doCountdown(tabId); }, 1000);
+  countdowns[tabId] = { 'url': url, 'host': getHostname(url), 'secondsLeft': parseInt(localStorage.secondsToWait), 'interval': interval, 'completed': false };
+
+  // Redirect
+  chrome.tabs.update(tabId, { 'url': chrome.extension.getURL('countdown.html') });
+}
+
+function doCountdown(tabId)
+{
+  // Countdown every second
+  countdowns[tabId].secondsLeft -= 1;
+
+  // Stop countdown when count reaches zero
+  if (countdowns[tabId].secondsLeft == 0)
+  {
+    stopCountdown(tabId);
+  }
+}
+
+// Redirect back to original page
+function stopCountdown(tabId)
+{
+  // Stop countdown
+  clearInterval(countdowns[tabId].interval);
+
+  countdowns[tabId].completed = true;
+
+  // Redirect
+  chrome.tabs.update(tabId, { 'url': countdowns[tabId].url });
+}
+
+function getHostname(url)
+{
+  var matches = url.match(new RegExp('^(https?://)?(www\.)?([^/]*)', 'i'));
+  //                                          matches[3] = ([^/]*)
+  return matches[3];
+}
+
+chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+  if (request.request == 'getCountdownInfo')
+  {
+    sendResponse(countdowns[request.tabId]);
+  }
+});
+
+</script>
+</html>
