@@ -1,8 +1,16 @@
 {
    "name": "TurtleWeb",
-   "version": "0.2",
+   "version": "0.1",
    "description": "Fight procrastination with impatience",
    "background_page": "background.html",
+   "content_scripts": [
+      {
+         "matches": ["http://*/*", "https://*/*"],
+         "css": ["turtle.css"],
+         "js": ["jquery.js", "turtle.js"],
+         "run_at": "document_start"
+      }
+   ],
    "options_page": "options.html",
    "permissions": [ "tabs" ]
 }
