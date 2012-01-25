@@ -4,12 +4,18 @@
 // Initialize localStorage variables if they haven't been initialized yet
 /*if (localStorage.blacklist == undefined)
    localStorage.blacklist = JSON.stringify([]);
-if (localStorage.secondsToWait == undefined)
-   localStorage.secondsToWait = '300';*/
+if (localStorage.countdownSeconds == undefined)
+   localStorage.countdownSeconds = '300';
+if (localStorage.unblockedSeconds == undefined)
+   localStorage.unblockedSeconds = '300';*/
+
+// Settings for testing
 localStorage.blacklist = JSON.stringify(['facebook.com']);
-localStorage.secondsToWait = '5';
+localStorage.countdownSeconds = '5';
+localStorage.unblockedTime = '10';
 
 var countdowns = {};
+var unblocked = [];
 
 chrome.tabs.onCreated.addListener(function (tab) {
   if (isBlacklisted(tab.url, tab.id))
@@ -34,15 +40,18 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   delete countdowns[tabId];
 });
 
+Array.prototype.contains = function (x) {
+  return (this.indexOf(x) >= 0);
+};
+
 function isBlacklisted(url, tabId)
 {
   var host = getHostname(url);
   var blacklist = JSON.parse(localStorage.blacklist);
 
-  if (blacklist.indexOf(host) >= 0)
+  if (blacklist.contains(host))
   {
-    // If a page has completed its countdown, say that it isn't blacklisted
-    if (countdowns[tabId] != undefined && countdowns[tabId].host == host && countdowns[tabId].completed == true)
+    if (tabs[tabId] != undefined && unblocked.contains(countdowns[tabId].host))
     {
       return false;
     }
@@ -58,7 +67,7 @@ function startCountdown(url, tabId)
 {
   // Start countdown
   var interval = setInterval(function () { doCountdown(tabId); }, 1000);
-  countdowns[tabId] = { 'url': url, 'host': getHostname(url), 'secondsLeft': parseInt(localStorage.secondsToWait), 'interval': interval, 'completed': false };
+  countdowns[tabId] = { 'url': url, 'host': getHostname(url), 'secondsLeft': parseInt(localStorage.countdownSeconds), 'interval': interval };
 
   // Redirect
   chrome.tabs.update(tabId, { 'url': chrome.extension.getURL('countdown.html') });
@@ -70,7 +79,7 @@ function doCountdown(tabId)
   countdowns[tabId].secondsLeft -= 1;
 
   // Stop countdown when count reaches zero
-  if (countdowns[tabId].secondsLeft == 0)
+  if (countdowns[tabId].secondsLeft <= 0)
   {
     stopCountdown(tabId);
   }
@@ -82,10 +91,26 @@ function stopCountdown(tabId)
   // Stop countdown
   clearInterval(countdowns[tabId].interval);
 
-  countdowns[tabId].completed = true;
+  unblock(countdowns[tabId.host]);
 
   // Redirect
   chrome.tabs.update(tabId, { 'url': countdowns[tabId].url });
+}
+
+function unblock(host)
+{
+  unblocked.push(host);
+
+  setTimeout(function() { reblock(countdowns[tabId].host); }, parseInt(localStorage.unblockedSeconds) * 1000);
+}
+
+Array.prototype.remove = function(x) {
+  delete this[this.indexOf(x)];
+};
+
+function reblock(host)
+{
+  unblocked.remove(host);
 }
 
 function getHostname(url)
