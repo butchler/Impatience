@@ -12,7 +12,7 @@ if (localStorage.unblockedSeconds == undefined)
 // Settings for testing
 localStorage.blacklist = JSON.stringify(['facebook.com']);
 localStorage.countdownSeconds = '5';
-localStorage.unblockedTime = '10';
+localStorage.unblockedSeconds = '10';
 
 var countdowns = {};
 var unblocked = [];
@@ -51,7 +51,14 @@ function isBlacklisted(url, tabId)
 
   if (blacklist.contains(host))
   {
-    if (tabs[tabId] != undefined && unblocked.contains(countdowns[tabId].host))
+    // The countdown is currently going on
+    /*if (countdowns[tabId] != undefined && countdowns[tabId].host == host)
+    {
+      return false;
+    }*/
+
+    // The site is temporarily unblocked
+    if (unblocked.contains(host))
     {
       return false;
     }
@@ -91,13 +98,13 @@ function stopCountdown(tabId)
   // Stop countdown
   clearInterval(countdowns[tabId].interval);
 
-  unblock(countdowns[tabId.host]);
+  unblock(countdowns[tabId].host, tabId);
 
   // Redirect
   chrome.tabs.update(tabId, { 'url': countdowns[tabId].url });
 }
 
-function unblock(host)
+function unblock(host, tabId)
 {
   unblocked.push(host);
 
