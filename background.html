@@ -1,55 +1,70 @@
 <html>
+<head>
 <script language="javascript">
-
-// Initialize localStorage variables if they haven't been initialized yet
-/*if (localStorage.blacklist == undefined)
-   localStorage.blacklist = JSON.stringify([]);
-if (localStorage.countdownSeconds == undefined)
-   localStorage.countdownSeconds = '300';
-if (localStorage.allowedSeconds == undefined)
-   localStorage.allowedSeconds = '600';*/
-
-// Settings for testing
-localStorage.turtledSites = JSON.stringify(['facebook.com']);   // The list of "turtled" sites
-localStorage.countdownSeconds = '10';   // The number of seconds that you have to wait before using a turtled site
-localStorage.allowedSeconds = '10';     // The number of seconds that you can use a turtled site before you have to wait again
 
 // Contains information about any currently running countdowns
 var countdowns = {};
 // List of turtled sites that have been temporarily unblocked after finishing the countdown
 var unturtledSites = [];
 
-// Some utility functions for arrays
-Array.prototype.contains = function (x) {
-  return (this.indexOf(x) >= 0);
-};
-Array.prototype.remove = function(x) {
-  delete this[this.indexOf(x)];
-};
+// Settings for testing
+localStorage.turtledSites = JSON.stringify(['facebook.com']);   // The list of "turtled" sites
+localStorage.countdownSeconds = '10';   // The number of seconds that you have to wait before using a turtled site
+localStorage.allowedSeconds = '10';     // The number of seconds that you can use a turtled site before you have to wait again
 
-// When a tab is created or its URL is updated, check if the new URL is a turtled website, and if so start a countdown
-chrome.tabs.onCreated.addListener(function (tab) {
-  if (isTurtled(tab.url, tab.id))
-  {
-    startCountdown(tab.url, tab.id);
-  }
-});
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-  if (changeInfo.url != undefined && isTurtled(changeInfo.url, tabId))
-  {
-    startCountdown(changeInfo.url, tabId);
-  }
-});
+initLocalStorage();
+addEventListeners();
 
-// When a countdown tab is removed, stop the countdown
-chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-  if (countdowns[tabId] != undefined)
-  {
-    clearInterval(countdowns[tabId].interval);
 
-    delete countdowns[tabId];
-  }
-});
+// Initialize localStorage variables if they haven't been initialized yet
+function initLocalStorage()
+{
+  if (localStorage.blacklist == undefined)
+    // The list of "turtled" sites
+    localStorage.blacklist = JSON.stringify([]);
+  if (localStorage.countdownSeconds == undefined)
+    // The number of seconds that you have to wait before using a turtled site
+    localStorage.countdownSeconds = '300';
+  if (localStorage.allowedSeconds == undefined)
+    // The number of seconds that you can use a turtled site before you have to wait again
+    localStorage.allowedSeconds = '600';
+}
+
+function addEventListeners()
+{
+  // When a tab is created or its URL is updated, check if the new URL is a turtled website, and if so start a countdown
+  chrome.tabs.onCreated.addListener(function (tab) {
+    if (isTurtled(tab.url, tab.id))
+    {
+      startCountdown(tab.url, tab.id);
+    }
+  });
+  chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+    if (changeInfo.url != undefined && isTurtled(changeInfo.url, tabId))
+    {
+      startCountdown(changeInfo.url, tabId);
+    }
+  });
+
+  // When a countdown tab is removed, stop the countdown
+  chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+    if (countdowns[tabId] != undefined)
+    {
+      clearInterval(countdowns[tabId].interval);
+
+      delete countdowns[tabId];
+    }
+  });
+
+  // This request is used by the countdown page to get the number of seconds left in the countdown
+  chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+    if (request.request == 'getCountdownInfo')
+    {
+      sendResponse(countdowns[request.tabId]);
+    }
+  });
+}
+
 
 // Check if a given page is turtled/blacklist
 function isTurtled(url, tabId)
@@ -126,6 +141,7 @@ function stopCountdown(tabId)
   delete countdowns[tabId];
 }
 
+
 // Temporarily unblock the given site
 function unturtle(host)
 {
@@ -150,13 +166,15 @@ function getHostname(url)
   return matches[3];   //                    matches[3] = ([^/]*)
 }
 
-// This request is used by the countdown page to get the number of seconds left in the countdown
-chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-  if (request.request == 'getCountdownInfo')
-  {
-    sendResponse(countdowns[request.tabId]);
-  }
-});
+
+// Some utility functions for arrays
+Array.prototype.contains = function (x) {
+  return (this.indexOf(x) >= 0);
+};
+Array.prototype.remove = function(x) {
+  delete this[this.indexOf(x)];
+};
 
 </script>
+</head>
 </html>
