@@ -19,160 +19,154 @@ addEventListeners();
 // Initialize localStorage variables if they haven't been initialized yet
 function initLocalStorage()
 {
-  if (localStorage.blacklist == undefined)
-    // The list of "turtled" sites
-    localStorage.blacklist = JSON.stringify([]);
-  if (localStorage.countdownSeconds == undefined)
-    // The number of seconds that you have to wait before using a turtled site
-    localStorage.countdownSeconds = '300';
-  if (localStorage.allowedSeconds == undefined)
-    // The number of seconds that you can use a turtled site before you have to wait again
-    localStorage.allowedSeconds = '600';
+   // The list of "turtled" sites
+   if (localStorage.blacklist == undefined)
+      localStorage.blacklist = JSON.stringify([]);
+   // The number of seconds that you have to wait before using a turtled site
+   if (localStorage.countdownSeconds == undefined)
+      localStorage.countdownSeconds = '300';
+   // The number of seconds that you can use a turtled site before you have to wait again
+   if (localStorage.allowedSeconds == undefined)
+      localStorage.allowedSeconds = '600';
 }
 
 function addEventListeners()
 {
-  // When a tab is created or its URL is updated, check if the new URL is a turtled website, and if so start a countdown
-  chrome.tabs.onCreated.addListener(function (tab) {
-    if (isTurtled(tab.url, tab.id))
-    {
-      startCountdown(tab.url, tab.id);
-    }
-  });
-  chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    if (changeInfo.url != undefined && isTurtled(changeInfo.url, tabId))
-    {
-      startCountdown(changeInfo.url, tabId);
-    }
-  });
+   // When a tab is created or its URL is updated, check if the new URL is a turtled website, and if so start a countdown
+   chrome.tabs.onCreated.addListener(function (tab) {
+      if (isTurtled(tab.url, tab.id))
+      {
+         startCountdown(tab.url, tab.id);
+      }
+   });
+   chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+      if (changeInfo.url != undefined && isTurtled(changeInfo.url, tabId))
+      {
+         startCountdown(changeInfo.url, tabId);
+      }
+   });
 
-  // When a countdown tab is removed, stop the countdown
-  chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-    if (countdowns[tabId] != undefined)
-    {
-      clearInterval(countdowns[tabId].interval);
+   // When a countdown tab is removed, stop the countdown
+   chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+      if (countdowns[tabId] != undefined)
+      {
+         stopCountdown(tabId);
+      }
+   });
 
-      delete countdowns[tabId];
-    }
-  });
-
-  // This request is used by the countdown page to get the number of seconds left in the countdown
-  chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-    if (request.request == 'getCountdownInfo')
-    {
-      sendResponse(countdowns[request.tabId]);
-    }
-  });
+   // This request is used by the countdown page to get the number of seconds left in the countdown
+   chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
+      if (request.request == 'getCountdownInfo')
+      {
+         sendResponse(countdowns[request.tabId]);
+      }
+   });
 }
 
 
 // Check if a given page is turtled/blacklist
 function isTurtled(url, tabId)
 {
-  var host = getHostname(url);
-  var turtledSites = JSON.parse(localStorage.turtledSites);
+   var host = getHostname(url);
+   var turtledSites = JSON.parse(localStorage.turtledSites);
 
-  if (turtledSites.contains(host))
-  {
-    // The site is temporarily unblocked
-    if (unturtledSites.contains(host))
-    {
-      return false;
-    }
+   // If the site is a turtled site and it hasn't been temporarily unblocked
+   if (turtledSites.contains(host) && !unturtledSites.contains(host))
+   {
+      return true;
+   }
 
-    return true;
-  }
-
-  return false;
+   return false;
 }
 
 // Start countdown and redirect to countdown page
 function startCountdown(url, tabId)
 {
-  var host = getHostname(url);
+   var host = getHostname(url);
 
-  // First, check if there is a countdown for the given site going on already
-  for (otherTab in countdowns)
-  {
-    if (countdowns[otherTab].host == host)
-    {
-      // There is already a countdown going on for this site, just use the exisiting countdown and redirect to countdown page
-      countdowns[tabId] = countdowns[otherTab];
+   // First, check if there is a countdown for the given site going on already
+   for (otherTab in countdowns)
+   {
+      if (countdowns[otherTab].host == host)
+      {
+         // There is already a countdown going on for this site, just use the exisiting countdown and redirect to countdown page
+         countdowns[tabId] = countdowns[otherTab];
 
-      // Redirect
-      chrome.tabs.update(tabId, { 'url': chrome.extension.getURL('countdown.html') });
+         // Redirect
+         chrome.tabs.update(tabId, { 'url': chrome.extension.getURL('countdown.html') });
 
-      return;
-    }
-  }
+         return;
+      }
+   }
 
-  // Start countdown
-  var interval = setInterval(function () { updateCountdown(tabId); }, 1000);
-  countdowns[tabId] = { 'url': url, 'host': host, 'secondsLeft': parseInt(localStorage.countdownSeconds), 'interval': interval };
+   // Start countdown
+   var interval = setInterval(function () { updateCountdown(tabId); }, 1000);
+   countdowns[tabId] = { 'url': url, 'host': host, 'secondsLeft': parseInt(localStorage.countdownSeconds), 'interval': interval };
 
-  // Redirect
-  chrome.tabs.update(tabId, { 'url': chrome.extension.getURL('countdown.html') });
+   // Redirect
+   chrome.tabs.update(tabId, { 'url': chrome.extension.getURL('countdown.html') });
 }
 
 function updateCountdown(tabId)
 {
-  // Countdown every second
-  countdowns[tabId].secondsLeft -= 1;
+   // Countdown every second
+   countdowns[tabId].secondsLeft -= 1;
 
-  // Stop countdown when count reaches zero
-  if (countdowns[tabId].secondsLeft <= 0)
-  {
-    stopCountdown(tabId);
-  }
+   // Stop countdown when count reaches zero
+   if (countdowns[tabId].secondsLeft <= 0)
+   {
+      stopCountdown(tabId);
+
+      unturtle(countdowns[tabId].host, countdowns[tabId].url);
+   }
 }
 
 // Redirect back to original page
 function stopCountdown(tabId)
 {
-  // Stop countdown
-  clearInterval(countdowns[tabId].interval);
+   // Stop countdown
+   clearInterval(countdowns[tabId].interval);
 
-  unturtle(countdowns[tabId].host);
-
-  // Redirect
-  chrome.tabs.update(tabId, { 'url': countdowns[tabId].url });
-
-  // Remove countdown information
-  delete countdowns[tabId];
+   // Remove countdown information
+   delete countdowns[tabId];
 }
 
 
-// Temporarily unblock the given site
-function unturtle(host)
+// Temporarily unblock the given site and redirect the user to that site
+function unturtle(host, url)
 {
-  // Add to list of temporarily unturtled sites
-  unturtledSites.push(host);
+   // Add to list of temporarily unturtled sites
+   unturtledSites.push(host);
 
-  // Remove the site from the unturtled list after localStorage.allowedSeconds seconds
-  setTimeout(function() { returtle(host); }, parseInt(localStorage.allowedSeconds) * 1000);
+   // Remove the site from the unturtled list after localStorage.allowedSeconds seconds
+   setTimeout(function() { returtle(host); }, parseInt(localStorage.allowedSeconds) * 1000);
+
+   // Redirect
+   chrome.tabs.update(tabId, { 'url': countdowns[tabId].url });
 }
 
 // After the allowed usage time is over, remove the given site from the unturtled list
 function returtle(host)
 {
-  unturtledSites.remove(host);
+   unturtledSites.remove(host);
 }
 
 // Get the hostname/site name of a given URL
 // For example, turn 'http://www.facebook.com/OrigamiClubatUCF' into just 'facebook.com'
 function getHostname(url)
 {
-  var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]*)', 'i'));
-  return matches[3];   //                    matches[3] = ([^/]*)
+   // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
+   var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
+   return matches[3];
 }
 
 
 // Some utility functions for arrays
 Array.prototype.contains = function (x) {
-  return (this.indexOf(x) >= 0);
+   return (this.indexOf(x) >= 0);
 };
 Array.prototype.remove = function(x) {
-  delete this[this.indexOf(x)];
+   delete this[this.indexOf(x)];
 };
 
 </script>

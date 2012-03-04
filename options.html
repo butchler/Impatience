@@ -1,0 +1,37 @@
+<html>
+
+<head>
+<title>TurtleWeb Options</title>
+
+<script type="text/javascript" src="jquery.min.js"></script>
+
+<style type="text/css">
+</style>
+
+<script type="text/javascript">
+$(document).ready(function() {
+   var turtledSites = JSON.parse(localStorage.turtledSites);
+   for (i in turtledSites)
+   {
+   }
+});
+</script>
+
+</head>
+
+<body>
+<div id="options">
+
+   <ul id="turtled-sites"></ul>
+
+   <div id="controls">
+      <input type="text" id="host" />
+      <button id="add">Add</button>
+   </div>
+
+   <input type="checkbox" id="page-action" /><label>Enable page action</label>
+
+</div>
+</body>
+
+</html>
