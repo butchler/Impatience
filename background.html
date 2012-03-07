@@ -28,28 +28,23 @@ function initLocalStorage()
       localStorage.allowedSeconds = '600';
 }
 
+
 function addEventListeners()
 {
    // When a tab is created or its URL is updated, check if the new URL is a turtled website, and if so start a countdown
    chrome.tabs.onCreated.addListener(function (tab) {
       if (isTurtled(tab.url))
-      {
-         startCountdownForTab(tab.url, tab.id);
-      }
+         getCountdownByHost(getHostname(tab.url)).addTab(tab.id, tab.url);
    });
    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
       if (changeInfo.url != undefined && isTurtled(changeInfo.url))
-      {
-         startCountdownForTab(changeInfo.url, tabId);
-      }
+         getCountdownByHost(getHostname(changeInfo.url)).addTab(tabId, changeInfo.url);
    });
 
    // When a countdown tab is removed, stop the countdown
    chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-      if (countdowns[tabId] != undefined)
-      {
-         stopCountdownForTab(tabId);
-      }
+      if (getCountdownByTab(tabId) != undefined)
+         getCountdownByTab(tabId).removeTab(tabId);
    });
 
    // This request is used by the countdown page to get the number of seconds left in the countdown
@@ -62,27 +57,17 @@ function addEventListeners()
 }
 
 
-function isTurtled(url, tabId)
+function isTurtled(url)
 {
    var host = getHostname(url);
    var turtledSites = JSON.parse(localStorage.turtledSites);
 
-   return (host in turtledSites);
-}
-
-function startCountdownForTab(url, tabId)
-{
-   getCountdownByHost(getHostname(url)).addTab(tabId, url);
-}
-
-function stopCountdownForTab(tabId)
-{
-   getCountdownByTab(tabId).removeTab(tabId);
+   return (turtledSites.contains(host) && !getCountdownByHost(host).countdownFinished);
 }
 
 function getCountdownByHost(host)
 {
-   return (countdown[host] || new Countdown(host));
+   return (countdowns[host] || new Countdown(host));
 }
 
 function getCountdownByTab(tabId)
@@ -92,16 +77,23 @@ function getCountdownByTab(tabId)
       var countdown = countdowns[host];
       var tabIds = countdown.tabs.map(function(tab) { return tab.id; });
 
-      if (tabId in tabIds)
+      if (tabIds.contains(tabId))
          return countdown;
    }
+}
+
+function getHostname(url)
+{
+   // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
+   var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
+   return matches[3];
 }
 
 
 function Countdown(host)
 {
    this.host = host;
-   this.tabs = []
+   this.tabs = [];
    this.countdownFinished = false;
 
    this.startCountdown(parseInt(localStorage.countdownSeconds));
@@ -112,15 +104,16 @@ function Countdown(host)
 Countdown.prototype.startCountdown = function(seconds) {
    this.secondsLeft = seconds;
 
-   this.coutdownInterval = setInterval(this.updateCountdown, 1000);
-}
+   var self = this;
+   this.countdownInterval = setInterval(function() { self.updateCountdown(); }, 1000);
+};
 
 Countdown.prototype.updateCountdown = function() {
    this.secondsLeft -= 1;
 
    if (this.secondsLeft <= 0)
       this.stopCountdown();
-}
+};
 
 Countdown.prototype.stopCountdown = function() {
    clearInterval(this.countdownInterval);
@@ -138,24 +131,30 @@ Countdown.prototype.stopCountdown = function() {
    this.countdownFinished = !this.countdownFinished;
 
    this.startCountdown(parseInt((this.countdownFinished) ? localStorage.allowedSeconds : localStorage.countdownSeconds));
-}
+};
 
 Countdown.prototype.addTab = function(tabId, url) {
-   this.tabs.push({ id: tabId, originalUrl: url, url: chrome.extension.getURL('countdown.html') });
+   var tab = { id: tabId, originalUrl: url, url: chrome.extension.getURL('countdown.html') };
+   this.tabs.push(tab);
 
    chrome.tabs.update(tab.id, { url: tab.url });
-}
+};
 
 Countdown.prototype.removeTab = function(tabId) {
    this.tabs = this.tabs.filter(function(tab) { return tab.id != tabId; });
 
    if (this.tabs.length == 0)
    {
-      this.stopCountdown();
+      clearInterval(this.countdownInterval);
 
       delete countdowns[this.host];
    }
-}
+};
+
+
+Array.prototype.contains = function(value) {
+   return (this.indexOf(value) > -1);
+};
 
 </script>
 </head>
