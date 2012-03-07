@@ -17,14 +17,17 @@ addEventListeners();
 // Initialize localStorage variables if they haven't been initialized yet
 function initLocalStorage()
 {
-   // The list of "turtled" sites
-   if (localStorage.blacklist == undefined)
+   if (localStorage.listType === undefined)
+      localStorage.listType = 'blacklist';
+   if (localStorage.blacklist === undefined)
       localStorage.blacklist = JSON.stringify([]);
+   if (localStorage.whitelist === undefined)
+      localStorage.whitelist = JSON.stringify([]);
    // The number of seconds that you have to wait before using a turtled site
-   if (localStorage.countdownSeconds == undefined)
+   if (localStorage.countdownSeconds === undefined)
       localStorage.countdownSeconds = '300';
    // The number of seconds that you can use a turtled site before you have to wait again
-   if (localStorage.allowedSeconds == undefined)
+   if (localStorage.allowedSeconds === undefined)
       localStorage.allowedSeconds = '600';
 }
 
@@ -37,19 +40,19 @@ function addEventListeners()
          getCountdownByHost(getHostname(tab.url)).addTab(tab.id, tab.url);
    });
    chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-      if (changeInfo.url != undefined && isTurtled(changeInfo.url))
+      if (changeInfo.url !== undefined && isTurtled(changeInfo.url))
          getCountdownByHost(getHostname(changeInfo.url)).addTab(tabId, changeInfo.url);
    });
 
    // When a countdown tab is removed, stop the countdown
    chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
-      if (getCountdownByTab(tabId) != undefined)
+      if (getCountdownByTab(tabId) !== undefined)
          getCountdownByTab(tabId).removeTab(tabId);
    });
 
    // This request is used by the countdown page to get the number of seconds left in the countdown
    chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-      if (request.request == 'getCountdownInfo')
+      if (request.request === 'getCountdownInfo')
       {
          sendResponse(getCountdownByTab(request.tabId));
       }
@@ -141,9 +144,9 @@ Countdown.prototype.addTab = function(tabId, url) {
 };
 
 Countdown.prototype.removeTab = function(tabId) {
-   this.tabs = this.tabs.filter(function(tab) { return tab.id != tabId; });
+   this.tabs = this.tabs.filter(function(tab) { return tab.id !== tabId; });
 
-   if (this.tabs.length == 0)
+   if (this.tabs.length === 0)
    {
       clearInterval(this.countdownInterval);
 

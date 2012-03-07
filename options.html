@@ -1,5 +1,4 @@
 <html>
-
 <head>
 <title>TurtleWeb Options</title>
 
@@ -9,12 +8,60 @@
 </style>
 
 <script type="text/javascript">
-$(document).ready(function() {
-   var turtledSites = JSON.parse(localStorage.turtledSites);
-   for (i in turtledSites)
-   {
-   }
+var sites = JSON.parse(localStorage[localStorage.listType]);
+
+$(function() {
+   showSites(localStorage.listType);
+
+   $('#site-list').click(function(e) {
+      // If one of the "X" links were clicked
+      if (e.target !== undefined && e.target.nodeName === 'A')
+      {
+         var siteItem = $(e.target).parent();
+         var siteName = siteItem.text();
+
+         // Remove site from localStorage list
+         sites = sites.filter(function(site) { return site != siteName; });
+         localStorage[localStorage.listType] = JSON.stringify(sites);
+
+         siteItem.remove();
+      }
+   });
 });
+
+function showSites(newListType)
+{
+   localStorage.listType = newListType;
+
+   sites = JSON.parse(localStorage[localStorage.listType]);
+
+   var siteList = $('#site-list');
+   siteList.empty();
+
+   sites.forEach(function(site) {
+      siteList.append('<li>' + site + ' <a class="remove">X</a></li>');
+   });
+}
+
+function addSite()
+{
+   var url = $('#url').val();
+
+   var site = getHostname(url);
+
+   sites.push(site);
+   localStorage[localStorage.listType] = JSON.stringify(sites);
+
+   $('#site-list').append('<li>' + site + ' <a class="remove">X</a></li>');
+}
+
+function getHostname(url)
+{
+   // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
+   var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
+   return matches[3];
+}
+
 </script>
 
 </head>
@@ -22,16 +69,17 @@ $(document).ready(function() {
 <body>
 <div id="options">
 
-   <ul id="turtled-sites"></ul>
-
+   <h2>"Turtled" sites</h2>
+   <p>Control which sites you want to be "turtled," that you must wait before you can use them.</p>
+   <p><input type="radio" name="list-type" value="blacklist" id="use-blacklist" onclick="showSites('blacklist');" /> <label for="use-blacklist">Use blacklist</label> <input type="radio" name="list-type" value="whitelist" id="use-whitelist" onclick="showSites('whitelist');" /> <label for="use-whitelist">Use whitelist</label></p>
+   <ul id="site-list"></ul>
    <div id="controls">
-      <input type="text" id="host" />
-      <button id="add">Add</button>
+      URL: <input type="text" id="url" /> <button id="add" onclick="addSite();">Add</button>
    </div>
 
-   <input type="checkbox" id="page-action" /><label>Enable page action</label>
+   <p>Make me wait <input type="number" value="5" /> minutes before I can use each turtled site.</p>
+   <p>Allow me to use each turtled site for <input type="number" value="5" /> minutes after waiting.</p>
 
 </div>
 </body>
-
 </html>
