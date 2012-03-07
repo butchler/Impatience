@@ -6,9 +6,11 @@
 var countdowns = {};
 
 // Settings for testing
-localStorage.turtledSites = JSON.stringify(['facebook.com']);   // The list of "turtled" sites
+/*
+localStorage.blacklist = JSON.stringify(['facebook.com']);   // The list of "turtled" sites
 localStorage.countdownSeconds = '5';   // The number of seconds that you have to wait before using a turtled site
 localStorage.allowedSeconds = '10';     // The number of seconds that you can use a turtled site before you have to wait again
+*/
 
 initLocalStorage();
 addEventListeners();
@@ -63,9 +65,12 @@ function addEventListeners()
 function isTurtled(url)
 {
    var host = getHostname(url);
-   var turtledSites = JSON.parse(localStorage.turtledSites);
+   var siteList = JSON.parse(localStorage[localStorage.listType]);
 
-   return (turtledSites.contains(host) && !getCountdownByHost(host).countdownFinished);
+   if (localStorage.listType === 'whitelist')
+      return (!siteList.contains(host) && !getCountdownByHost(host).countdownFinished)
+   else // localStorage.listType === 'blacklist'
+      return (siteList.contains(host) && !getCountdownByHost(host).countdownFinished)
 }
 
 function getCountdownByHost(host)

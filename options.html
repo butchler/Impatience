@@ -17,14 +17,14 @@ $(function() {
       // If one of the "X" links were clicked
       if (e.target !== undefined && e.target.nodeName === 'A')
       {
-         var siteItem = $(e.target).parent();
+         var siteItem = $(e.target).siblings('.site');
          var siteName = siteItem.text();
 
          // Remove site from localStorage list
          sites = sites.filter(function(site) { return site != siteName; });
          localStorage[localStorage.listType] = JSON.stringify(sites);
 
-         siteItem.remove();
+         siteItem.parent().remove();
       }
    });
 });
@@ -39,7 +39,7 @@ function showSites(newListType)
    siteList.empty();
 
    sites.forEach(function(site) {
-      siteList.append('<li>' + site + ' <a class="remove">X</a></li>');
+      siteList.append('<li><span class="site">' + site + '</span> <a class="remove">X</a></li>');
    });
 }
 
@@ -52,7 +52,7 @@ function addSite()
    sites.push(site);
    localStorage[localStorage.listType] = JSON.stringify(sites);
 
-   $('#site-list').append('<li>' + site + ' <a class="remove">X</a></li>');
+   $('#site-list').append('<li><span class="site">' + site + '</span> <a class="remove">X</a></li>');
 }
 
 function getHostname(url)
