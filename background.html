@@ -94,7 +94,7 @@ function getHostname(url)
 {
    // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
    var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
-   return matches[3];
+   return (matches === null) ? '' : matches[3];
 }
 
 
