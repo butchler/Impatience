@@ -4,9 +4,5 @@
    "description": "Fight procrastination with impatience",
    "background_page": "background.html",
    "options_page": "options.html",
-   "page_action": {
-      "default_icon": "turtle.png",
-      "default_popup": "popup.html"
-   },
    "permissions": [ "tabs" ]
 }
