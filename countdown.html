@@ -28,6 +28,8 @@
 </style>
 
 <script type="text/javascript">
+var countdownInterval;
+
 function startCountdown()
 {
   chrome.tabs.getCurrent(function (tab) {
@@ -41,17 +43,21 @@ function startCountdown()
   });
 
   updateCountdown();
-  setInterval(updateCountdown, 1000);
+  countdownInterval = setInterval(updateCountdown, 1000);
 }
 
 function updateCountdown()
 {
   chrome.tabs.getCurrent(function (tab) {
     chrome.extension.sendRequest({ 'request': 'getCountdownInfo', 'tabId': tab.id }, function(countdownInfo) {
-      if (countdownInfo != null)
+      if (countdownInfo != null && countdownInfo.secondsLeft > 0)
       {
         var timeleft = document.getElementById('timeleft');
         timeleft.innerHTML = formatTime(countdownInfo.secondsLeft);
+      }
+      else if (countdownInterval)
+      {
+         clearInterval(countdownInterval);
       }
     });
   });
@@ -59,7 +65,9 @@ function updateCountdown()
 
 function formatTime(seconds)
 {
-  return seconds.toString();
+  var minutes = Math.floor(seconds / 60);
+  seconds = seconds % 60;
+  return minutes + ':' + ((seconds < 10) ? '0' : '') + seconds;
 }
 </script>
 </head>
