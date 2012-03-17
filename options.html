@@ -4,62 +4,91 @@
 
 <script type="text/javascript" src="jquery.min.js"></script>
 
-<style type="text/css">
-</style>
-
 <script type="text/javascript">
-var sites = JSON.parse(localStorage[localStorage.listType]);
 
 $(function() {
-   showSites(localStorage.listType);
+   // Init blacklist/whitelist
+   initListType();
+   initSiteList();
 
-   $('#site-list').click(function(e) {
-      // If one of the "X" links were clicked
-      if (e.target !== undefined && e.target.nodeName === 'A')
-      {
-         var siteItem = $(e.target).siblings('.site');
-         var siteName = siteItem.text();
-
-         // Remove site from localStorage list
-         sites = sites.filter(function(site) { return site != siteName; });
-         localStorage[localStorage.listType] = JSON.stringify(sites);
-
-         siteItem.parent().remove();
-      }
-   });
+   // Init timing
+   initTiming('countdown');
+   initTiming('allowed');
 });
 
-function showSites(newListType)
+
+function initTiming(type)
 {
-   localStorage.listType = newListType;
+   var minuteBox = $('#' + type + '-minutes');
 
-   sites = JSON.parse(localStorage[localStorage.listType]);
+   minuteBox.val(localStorage[type + 'Seconds'] / 60)
 
-   var siteList = $('#site-list');
-   siteList.empty();
+   var updateSeconds = function (e) {
+      localStorage[type + 'Seconds'] = e.target.value * 60;
+   };
 
-   sites.forEach(function(site) {
-      siteList.append('<li><span class="site">' + site + '</span> <a class="remove">X</a></li>');
+   minuteBox.change(updateSeconds).blur(updateSeconds);
+}
+
+
+function initListType()
+{
+   $('#use-' + localStorage.listType)[0].checked = 'checked';
+
+   $('input[name="list-type"]').change(function(e) {
+      localStorage.listType = e.target.value;
+
+      loadSites();
    });
 }
 
-function addSite()
+function initSiteList()
 {
-   var url = $('#url').val();
+   loadSites();
 
-   var site = getHostname(url);
+   // Init add site event
+   $('#add-site').click(function(e) {
+      var url = $('#url').val();
+      addSite(getHostname(url));
+   });
+}
+function loadSites()
+{
+   $('#site-list').empty();
 
-   sites.push(site);
+   var sites = JSON.parse(localStorage[localStorage.listType]);
+
+   sites.forEach(function(site) {
+      $('#site-list').append('<li><span class="site">' + site + '</span> <a class="remove" onclick="removeSite(\'' + site + '\');">X</a></li>');
+   });
+}
+
+function addSite(newSite)
+{
+   //removeSite(newSite);
+
+   var sites = JSON.parse(localStorage[localStorage.listType]);
+   sites.push(newSite);
    localStorage[localStorage.listType] = JSON.stringify(sites);
 
-   $('#site-list').append('<li><span class="site">' + site + '</span> <a class="remove">X</a></li>');
+   loadSites();
 }
+
+function removeSite(removedSite)
+{
+   var sites = JSON.parse(localStorage[localStorage.listType]);
+   sites = sites.filter(function(site) { return site !== removedSite; });
+   localStorage[localStorage.listType] = JSON.stringify(sites);
+
+   loadSites();
+}
+
 
 function getHostname(url)
 {
    // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
    var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
-   return matches[3];
+   return (matches !== null) ? matches[3] : url;
 }
 
 </script>
@@ -69,16 +98,21 @@ function getHostname(url)
 <body>
 <div id="options">
 
-   <h2>"Turtled" sites</h2>
-   <p>Control which sites you want to be "turtled," that you must wait before you can use them.</p>
-   <p><input type="radio" name="list-type" value="blacklist" id="use-blacklist" onclick="showSites('blacklist');" /> <label for="use-blacklist">Use blacklist</label> <input type="radio" name="list-type" value="whitelist" id="use-whitelist" onclick="showSites('whitelist');" /> <label for="use-whitelist">Use whitelist</label></p>
-   <ul id="site-list"></ul>
-   <div id="controls">
-      URL: <input type="text" id="url" /> <button id="add" onclick="addSite();">Add</button>
-   </div>
+   <h2>Turtled sites</h2>
+   <p>Control which sites you want to be "turtled," meaning that you have to wait before you can use them.</p>
 
-   <p>Make me wait <input type="number" value="5" /> minutes before I can use each turtled site.</p>
-   <p>Allow me to use each turtled site for <input type="number" value="5" /> minutes after waiting.</p>
+   <p>
+      <input type="radio" name="list-type" value="blacklist" id="use-blacklist" /> <label for="use-blacklist">Use blacklist</label>
+      <input type="radio" name="list-type" value="whitelist" id="use-whitelist" /> <label for="use-whitelist">Use whitelist</label>
+   </p>
+
+   <ul id="site-list"></ul>
+   <form id="controls">
+      URL: <input type="text" id="url" /> <input type="submit" id="add-site" value="Add" />
+   </form>
+
+   <p>Make me wait <input id="countdown-minutes" type="number" /> minutes before I can use each turtled site.</p>
+   <p>Allow me to use each turtled site for <input id="allowed-minutes" type="number" /> minutes after waiting.</p>
 
 </div>
 </body>
