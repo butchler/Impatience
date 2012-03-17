@@ -1,6 +1,7 @@
 {
    "name": "TurtleWeb",
    "version": "0.2",
+   "icons": { "24": "turtle.png" },
    "description": "Fight procrastination with impatience",
    "background_page": "background.html",
    "options_page": "options.html",

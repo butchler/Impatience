@@ -2,9 +2,6 @@
 <head>
 <script language="javascript">
 
-// Contains information about any currently running countdowns
-var countdowns = {};
-
 // Settings for testing
 /*
 localStorage.blacklist = JSON.stringify(['facebook.com']);   // The list of "turtled" sites
@@ -27,7 +24,7 @@ function initLocalStorage()
       localStorage.whitelist = JSON.stringify([]);
    // The number of seconds that you have to wait before using a turtled site
    if (localStorage.countdownSeconds === undefined)
-      localStorage.countdownSeconds = '300';
+      localStorage.countdownSeconds = '60';
    // The number of seconds that you can use a turtled site before you have to wait again
    if (localStorage.allowedSeconds === undefined)
       localStorage.allowedSeconds = '600';
@@ -62,6 +59,7 @@ function addEventListeners()
 }
 
 
+
 function isTurtled(url)
 {
    var host = getHostname(url);
@@ -72,6 +70,10 @@ function isTurtled(url)
    else // localStorage.listType === 'blacklist'
       return (siteList.contains(host) && !getCountdownByHost(host).countdownFinished)
 }
+
+
+// Keeps track of the countdowns for each host
+var countdowns = {};
 
 function getCountdownByHost(host)
 {
@@ -90,11 +92,12 @@ function getCountdownByTab(tabId)
    }
 }
 
+
 function getHostname(url)
 {
    // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
    var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
-   return (matches === null) ? '' : matches[3];
+   return (matches !== null) ? matches[3] : url;
 }
 
 
