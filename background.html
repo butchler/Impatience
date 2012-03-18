@@ -1,13 +1,6 @@
 <html>
-<head>
-<script language="javascript">
-
-// Settings for testing
-/*
-localStorage.blacklist = JSON.stringify(['facebook.com']);   // The list of "turtled" sites
-localStorage.countdownSeconds = '5';   // The number of seconds that you have to wait before using a turtled site
-localStorage.allowedSeconds = '10';     // The number of seconds that you can use a turtled site before you have to wait again
-*/
+<body>
+<script type="text/javascript">
 
 initLocalStorage();
 addEventListeners();
@@ -57,7 +50,6 @@ function addEventListeners()
       }
    });
 }
-
 
 
 function isTurtled(url)
@@ -168,5 +160,6 @@ Array.prototype.contains = function(value) {
 };
 
 </script>
+</body>
 </head>
 </html>
