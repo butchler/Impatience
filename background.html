@@ -41,14 +41,6 @@ function addEventListeners()
       if (getCountdownByTab(tabId) !== undefined)
          getCountdownByTab(tabId).removeTab(tabId);
    });
-
-   // This request is used by the countdown page to get the number of seconds left in the countdown
-   chrome.extension.onRequest.addListener(function(request, sender, sendResponse) {
-      if (request.request === 'getCountdownInfo')
-      {
-         sendResponse(getCountdownByTab(request.tabId));
-      }
-   });
 }
 
 
@@ -114,6 +106,8 @@ Countdown.prototype.startCountdown = function(seconds) {
 Countdown.prototype.updateCountdown = function() {
    this.secondsLeft -= 1;
 
+   chrome.extension.sendRequest(this);
+
    if (this.secondsLeft <= 0)
       this.stopCountdown();
 };
@@ -140,7 +134,7 @@ Countdown.prototype.addTab = function(tabId, url) {
    var tab = { id: tabId, originalUrl: url, url: chrome.extension.getURL('countdown.html') };
    this.tabs.push(tab);
 
-   chrome.tabs.update(tab.id, { url: tab.url });
+   chrome.tabs.update(tab.id, { url: tab.url + '#' + getHostname(tab.originalUrl) });
 };
 
 Countdown.prototype.removeTab = function(tabId) {

@@ -1,37 +1,16 @@
-var countdownInterval;
 
-function startCountdown()
-{
-  chrome.tabs.getCurrent(function (tab) {
-    chrome.extension.sendRequest({ 'request': 'getCountdownInfo', 'tabId': tab.id }, function(countdownInfo) {
-      if (countdownInfo != null)
-      {
-        var message = document.getElementById('message');
-        message.innerHTML = 'You can use ' + countdownInfo.host + ' in:';
-      }
-    });
-  });
+var host = window.location.hash.substr(1);
 
-  updateCountdown();
-  countdownInterval = setInterval(updateCountdown, 1000);
-}
+var message = document.getElementById('message');
+message.innerHTML = 'You can use ' + host + ' in:';
 
-function updateCountdown()
-{
-  chrome.tabs.getCurrent(function (tab) {
-    chrome.extension.sendRequest({ 'request': 'getCountdownInfo', 'tabId': tab.id }, function(countdownInfo) {
-      if (countdownInfo != null && countdownInfo.secondsLeft > 0)
-      {
-        var timeleft = document.getElementById('timeleft');
-        timeleft.innerHTML = formatTime(countdownInfo.secondsLeft);
-      }
-      else if (countdownInterval)
-      {
-         clearInterval(countdownInterval);
-      }
-    });
-  });
-}
+chrome.extension.onRequest.addListener(function (countdownInfo) {
+   if (countdownInfo.host == host && countdownInfo.secondsLeft >= 0)
+   {
+      var timeleft = document.getElementById('timeleft');
+      timeleft.innerHTML = formatTime(countdownInfo.secondsLeft);
+   }
+});
 
 function formatTime(seconds)
 {
@@ -39,6 +18,4 @@ function formatTime(seconds)
   seconds = seconds % 60;
   return minutes + ':' + ((seconds < 10) ? '0' : '') + seconds;
 }
-
-startCountdown();
 
