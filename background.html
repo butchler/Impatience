@@ -79,9 +79,19 @@ function getCountdownByTab(tabId)
 
 function getHostname(url)
 {
-   // Return anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
+   // Look for anything after the protocol and www. that does not have slash in it (and hope that that's actually the domain name)
    var matches = url.match(new RegExp('^([^:]*://)?(www\.)?([^/]+)', 'i'));
-   return (matches !== null) ? matches[3] : url;
+   var host = (matches !== null) ? matches[3] : url;
+
+   // Look for a site in the black/whitelist that contains the hostname, and if one is found, use that as the hostname
+   var siteList = JSON.parse(localStorage[localStorage.listType]);
+   for (var i = 0; i < siteList.length; i++)
+   {
+      if (host.contains(siteList[i]))
+         return siteList[i];
+   }
+
+   return host;
 }
 
 
@@ -154,7 +164,10 @@ Countdown.prototype.removeTab = function(tabId) {
 
 
 Array.prototype.contains = function(value) {
-   return (this.indexOf(value) > -1);
+   return (this.indexOf(value) >= 0);
+};
+String.prototype.contains = function(otherString) {
+   return (this.indexOf(otherString) >= 0);
 };
 
 </script>
