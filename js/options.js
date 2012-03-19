@@ -51,7 +51,7 @@ function loadSites()
    var sites = JSON.parse(localStorage[localStorage.listType]);
 
    sites.forEach(function(site) {
-      $('#site-list').append('<li><span class="site">' + site + '</span> <a class="remove" onclick="removeSite(\'' + site + '\');">X</a></li>');
+      $('#site-list').append('<li><span class="site">' + site + '</span> <a class="remove" href="#" onclick="removeSite(\'' + site + '\');">remove</a></li>');
    });
 }
 

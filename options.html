@@ -8,21 +8,26 @@
 
 </head>
 
-<body>
+<body id="options">
 
-   <div id="options">
+   <h1>TurtleWeb Options</h1>
+
+   <div class="container">
 
       <h2>Turtled sites</h2>
+
       <p>Control which sites you want to be "turtled," meaning that you have to wait a little bit before you can use them.</p>
 
-      <p>
+      <div>
          <input type="radio" name="list-type" value="blacklist" id="use-blacklist" /> <label for="use-blacklist">Use blacklist</label>
          <input type="radio" name="list-type" value="whitelist" id="use-whitelist" /> <label for="use-whitelist">Use whitelist</label>
-      </p>
+      </div>
       <ul id="site-list"></ul>
       <form id="controls">
          URL: <input type="text" id="url" /> <input type="submit" id="add-site" value="Add" />
       </form>
+
+      <h2>Timing</h2>
 
       <p>Make me wait <input id="countdown-minutes" type="number" /> minutes before I can use each turtled site.</p>
       <p>Allow me to use each turtled site for <input id="allowed-minutes" type="number" /> minutes after waiting.</p>

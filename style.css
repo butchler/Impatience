@@ -1,22 +1,73 @@
+#countdown, #options
+{
+  background-color: #222;
+  color: #888;
+  font-family: sans-serif;
+}
+
 /* For countdown page */
 #countdown
 {
-  background-color: black;
-  position: fixed;
-  top: 0; left: 0;
-  right: 0; bottom: 0;
-
   text-align: center;
-  font-family: sans-serif;
-  font-size: 18px;
-  color: #666;
 
-  padding-top: 150px;
+  padding-top: 5em;
+}
+
+#message
+{
+   font-size: 1.125em;
 }
 
 #timeleft
 {
-  color: white;
+  color: #eee;
   font-weight: bold;
-  font-size: 100px;
+  font-size: 6.25em;
 }
+
+/* For options page */
+#options
+{
+   padding-top: 2em;
+}
+
+#options h1
+{
+   color: #eee;
+   text-align: center;
+}
+
+.container
+{
+   background-color: #eee;
+   border-radius: 10px;
+   box-shadow: 5px 5px 20px 0 black;
+
+   width: 80%;
+   margin: 0 auto;
+   padding: 1em;
+
+   color: #666;
+}
+
+#site-list li
+{
+   padding: 0.25em;
+   border-bottom: 1px solid #ccc;
+   list-style: none;
+   cursor: default;
+}
+#site-list li:first-child
+{
+   border-top: 1px solid #ccc;
+}
+#site-list .remove
+{
+   float: right;
+}
+#site-list li:hover
+{
+   background-color: #ddd;
+   color: black;
+}
+
