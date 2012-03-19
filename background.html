@@ -118,6 +118,10 @@ Countdown.prototype.stopCountdown = function() {
    // Redirect all tabs back to their original URLs
    this.tabs.forEach(function (tab) {
       chrome.tabs.get(tab.id, function(tabInfo) {
+         // In case the tab doesn't exist anymore for some reason
+         if (tabInfo === undefined)
+            this.removeTab(tab.id);
+
          tab.url = tab.originalUrl;
          tab.originalUrl = tabInfo.url;
 

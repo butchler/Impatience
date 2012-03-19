@@ -5,7 +5,7 @@ var message = document.getElementById('message');
 message.innerHTML = 'You can use ' + host + ' in:';
 
 chrome.extension.onRequest.addListener(function (countdownInfo) {
-   if (countdownInfo.host == host && countdownInfo.secondsLeft >= 0)
+   if (countdownInfo.host === host && !countdownInfo.countdownFinished && countdownInfo.secondsLeft >= 0)
    {
       var timeleft = document.getElementById('timeleft');
       timeleft.innerHTML = formatTime(countdownInfo.secondsLeft);
